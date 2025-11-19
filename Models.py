@@ -10,3 +10,16 @@ class Voluntario(models.Model):
 
     def __str__(self):
         return self.nome_completo
+class Doacao(models.Model):
+    produto = models.CharField(max_length=100)
+    quantidade = models.IntegerField()
+    # Link com o id do voluntário que doou
+    voluntario = models.ForeignKey(Voluntario, on_delete=models.SET_NULL, null=True, related_name='doacoes')
+
+    def Doacao(self):
+        return f"{self.produto} 
+        ({self.quantidade}) 
+        - Doado por: 
+        {self.voluntario.nome_completo 
+         if self.voluntario 
+         else 'Não informado'}"
