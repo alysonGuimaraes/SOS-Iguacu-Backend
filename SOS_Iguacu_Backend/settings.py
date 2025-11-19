@@ -120,12 +120,24 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'nome_do_seu_banco', # Nome do banco de dados MySQL
+        'USER': 'seu_usuario_mysql', # Seu usu√°rio MySQL
+        'PASSWORD': 'sua_senha_mysql', # Sua senha MySQL
+        'HOST': 'localhost', # Ou o IP/Host do seu servidor MySQL
+        'PORT': '3306', # Porta padr√£o do MySQL
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        }
+    }
+}
 
 # ==============================================================================
-# CONFIGURA«√O FUTURA DE CORS (Para comunicar com React)
+# CONFIGURA√á√ÉO FUTURA DE CORS (Para comunicar com React)
 # ==============================================================================
-# Esta seÁ„o deve ser descomentada/adicionada apÛs a instalaÁ„o do 'django-cors-headers'
+# Esta se√ß√£o deve ser descomentada/adicionada ap√≥s a instala√ß√£o do 'django-cors-headers'
 # CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",  # O endereÁo padr„o do React dev server
+#     "http://localhost:3000",  # O endere√ßo padr√£o do React dev server
 # ]
