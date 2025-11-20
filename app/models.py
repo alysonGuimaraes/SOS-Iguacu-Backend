@@ -1,4 +1,3 @@
-# models.py (no seu app Django)
 from django.db import models
 
 class Voluntario(models.Model):
