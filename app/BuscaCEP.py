@@ -1,4 +1,4 @@
-import requests
+from django import request
 
 def buscar_endereco_por_cep(cep):
     """
