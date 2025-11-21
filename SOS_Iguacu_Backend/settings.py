@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'app'
 ]
 
@@ -75,8 +76,12 @@ WSGI_APPLICATION = 'SOS_Iguacu_Backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'sos_iguacu',     # Nome do banco de dados que você criará
+        'USER': 'postgres',   # Geralmente 'postgres' ou seu nome de usuário
+        'PASSWORD': '123', # Sua senha
+        'HOST': 'localhost',             # Onde o PostgreSQL está rodando
+        'PORT': '5432',                  # Porta padrão do PostgreSQL
     }
 }
 
@@ -121,19 +126,19 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'nome_do_seu_banco', # Nome do banco de dados MySQL
-        'USER': 'seu_usuario_mysql', # Seu usuário MySQL
-        'PASSWORD': 'sua_senha_mysql', # Sua senha MySQL
-        'HOST': 'localhost', # Ou o IP/Host do seu servidor MySQL
-        'PORT': '3306', # Porta padrão do MySQL
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        }
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'nome_do_seu_banco', # Nome do banco de dados MySQL
+#         'USER': 'seu_usuario_mysql', # Seu usuário MySQL
+#         'PASSWORD': 'sua_senha_mysql', # Sua senha MySQL
+#         'HOST': 'localhost', # Ou o IP/Host do seu servidor MySQL
+#         'PORT': '3306', # Porta padrão do MySQL
+#         'OPTIONS': {
+#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+#         }
+#     }
+# }
 
 # ==============================================================================
 # CONFIGURAÇÃO FUTURA DE CORS (Para comunicar com React)
