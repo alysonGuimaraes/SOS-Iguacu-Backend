@@ -149,7 +149,6 @@ class Doacao(models.Model):
     entregue = models.BooleanField(default=False, verbose_name="Foi entregue ao destino?")
 
     def __str__(self):
-        origem = self.voluntario.nome_completo if self.voluntario else 'Anônimo'
         destino_nome = self.destino.nome_identificacao if self.destino else 'Estoque Geral'
         return f"{self.quantidade}x {self.produto} ({origem} -> {destino_nome})"
 
