@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'app'
 ]
 
@@ -45,6 +46,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'SOS_Iguacu_Backend.urls'
@@ -140,6 +142,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CONFIGURAÇÃO FUTURA DE CORS (Para comunicar com React)
 # ==============================================================================
 # Esta seção deve ser descomentada/adicionada após a instalação do 'django-cors-headers'
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",  # O endereço padrão do React dev server
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # O endereço padrão do React dev server
+]
