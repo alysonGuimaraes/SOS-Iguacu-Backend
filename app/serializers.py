@@ -19,6 +19,6 @@ class DoacaoSerializer(serializers.ModelSerializer):
         model = Doacao
         fields = [
             'id', 'produto', 'tipo', 'situacao', 'quantidade', 'unidade_medida', 'quantidade_por_volume',
-            'destino', 'nome_destino',       # Mostra ID e Nome
+            'destino', 'nome_destino', 'entregue',
             'data_doacao'
         ]

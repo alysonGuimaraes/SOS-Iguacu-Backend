@@ -97,7 +97,7 @@ class Voluntario(models.Model):
     def __str__(self):
         return f"{self.nome_completo} ({self.get_habilidade_principal_display()})"
 
-class Doacao(models.Model):
+class Doacao(models.Model): 
     """
     Representa o recurso doado.
     Foco: Rastreabilidade (Quantidade, Onde está / Para onde foi).
@@ -150,6 +150,6 @@ class Doacao(models.Model):
 
     def __str__(self):
         destino_nome = self.destino.nome_identificacao if self.destino else 'Estoque Geral'
-        return f"{self.quantidade}x {self.produto} ({origem} -> {destino_nome})"
+        return f"{self.quantidade}x {self.produto} - Local/Destino -> {destino_nome} - Status -> {self.situacao}"
 
 
