@@ -150,6 +150,6 @@ class Doacao(models.Model):
 
     def __str__(self):
         destino_nome = self.destino.nome_identificacao if self.destino else 'Estoque Geral'
-        return f"{self.quantidade}x {self.produto} ({origem} -> {destino_nome})"
+        return f"{self.quantidade}x {self.produto} (área origem -> {destino_nome})"
 
 
