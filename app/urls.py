@@ -13,4 +13,7 @@ urlpatterns = [
     # Região afetada
     path('regiao-afetada', views.regiao_lista),
     path('regiao-afetada/<uuid:pk>', views.regiao_detalhes),
+
+    # APIs externas
+    path('consulta-cep/<str:cep>', views.busca_cep, name='busca-cep'),
 ]
