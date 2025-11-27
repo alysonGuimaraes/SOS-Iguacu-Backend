@@ -3,8 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+
+from app.services.viacep import ViaCepClient
 from .models import Voluntario, RegiaoAfetada, Doacao
-from .serializers import VoluntarioSerializer, RegiaoAfetadaSerializer, DoacaoSerializer
+from .serializers import CepInputSerializer, VoluntarioSerializer, RegiaoAfetadaSerializer, DoacaoSerializer
+
 
 # =================================================
 # VOLUNTÁRIOS
@@ -151,3 +154,25 @@ def doacao_detalhes(request, pk):
     elif request.method == 'DELETE':
         doacao.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+# =================================================
+# APIs externas
+# =================================================
+
+@api_view(['GET'])
+def busca_cep(request, cep):
+    serializer = CepInputSerializer(data={'cep': cep})
+
+    # Se a validação falhar, um erro será retornado imediatamente
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    client = ViaCepClient()
+    
+    resultado = client.consultar_cep(cep)
+
+    if not resultado['success']:
+        return Response({'erro': resultado['error']}, status=400)
+
+    return Response(resultado['data'])

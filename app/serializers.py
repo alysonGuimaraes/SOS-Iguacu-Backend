@@ -22,3 +22,19 @@ class DoacaoSerializer(serializers.ModelSerializer):
             'destino', 'nome_destino', 'entregue',
             'data_doacao'
         ]
+
+
+class CepInputSerializer(serializers.Serializer):
+    # Define que o campo é texto, com tamanho min/max básico
+    cep = serializers.CharField(min_length=8, max_length=9)
+
+    def validate_cep(self, value):
+        clean_value = value.replace('-', '').replace('.', '')
+
+        if not clean_value.isdigit():
+            raise serializers.ValidationError("O CEP deve conter apenas números.")
+
+        if len(clean_value) != 8:
+            raise serializers.ValidationError("O CEP deve ter exatamente 8 dígitos numéricos.")
+
+        return clean_value
