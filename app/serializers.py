@@ -38,3 +38,10 @@ class CepInputSerializer(serializers.Serializer):
             raise serializers.ValidationError("O CEP deve ter exatamente 8 dígitos numéricos.")
 
         return clean_value
+    
+
+class GeoInputSerializer(serializers.Serializer):
+    # Latitude vai de -90 a +90
+    latitude = serializers.FloatField(min_value=-90, max_value=90)
+    # Longitude vai de -180 a +180
+    longitude = serializers.FloatField(min_value=-180, max_value=180)

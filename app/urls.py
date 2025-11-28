@@ -16,4 +16,5 @@ urlpatterns = [
 
     # APIs externas
     path('consulta-cep/<str:cep>', views.busca_cep, name='busca-cep'),
+    path('geo-reversa', views.geolocalizacao_reversa, name='geo-reversa'),
 ]

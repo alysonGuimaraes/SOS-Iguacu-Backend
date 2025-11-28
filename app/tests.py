@@ -1,5 +1,6 @@
 # Create your tests here.
 
+from unittest.mock import Mock, patch
 from django.test import TestCase
 from django.utils import timezone
 from datetime import timedelta, date
@@ -9,7 +10,7 @@ from django.urls import reverse
 
 # Importa os modelos e serializers
 from .models import RegiaoAfetada, Voluntario, Doacao
-from .serializers import VoluntarioSerializer, RegiaoAfetadaSerializer, DoacaoSerializer
+from .serializers import GeoInputSerializer, CepInputSerializer, VoluntarioSerializer, RegiaoAfetadaSerializer, DoacaoSerializer
 
 
 # ==============================================================================
@@ -536,3 +537,253 @@ class IntegrationTest(APITestCase):
         self.assertTrue(response_update.data['entregue'])
 
         # Fim do fluxo de integração com sucesso
+
+# ==============================================================================
+# 4. TESTE DE APIs EXTERNAS
+# ==============================================================================
+
+class CepValidationTest(TestCase):
+    """
+    Testa apenas se as regras de validação (Serializer) estão funcionando.
+    Não envolve chamadas externas.
+    """
+    
+    def test_cep_valido_com_formatacao(self):
+        # Cenário: Usuário manda CEP com ponto e traço
+        data = {'cep': '12345-678'}
+        serializer = CepInputSerializer(data=data)
+        
+        # O serializer deve aceitar
+        self.assertTrue(serializer.is_valid())
+        # E deve limpar os caracteres especiais
+        self.assertEqual(serializer.validated_data['cep'], '12345678')
+
+    def test_cep_invalido_letras(self):
+        # Cenário: Usuário manda letras
+        data = {'cep': '1234567a'}
+        serializer = CepInputSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('cep', serializer.errors) # Deve ter erro no campo 'cep'
+
+    def test_cep_invalido_tamanho(self):
+        # Cenário: CEP curto demais
+        data = {'cep': '123'}
+        serializer = CepInputSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+
+
+class CepIntegrationTest(TestCase):
+    """
+    Testa a View e a integração com a 'libs', mas MOCKANDO o requests.
+    """
+    
+    def setUp(self):
+        self.client = APIClient()
+
+    # O @patch substitui o 'requests.get' VERDADEIRO por um FALSO apenas neste teste
+    @patch('app.services.viacep.requests.get')
+    def test_consulta_cep_sucesso(self, mock_get):
+        """
+        Simula uma chamada onde o ViaCep retorna sucesso (200).
+        """
+        # 1. Configurar o Dublê (Mock)
+        resposta_simulada = Mock()
+        resposta_simulada.status_code = 200
+        # O json() que o requests retornaria:
+        resposta_simulada.json.return_value = {
+            "cep": "01001-000",
+            "bairro": "teste",
+            "logradouro": "Praça da Sé",
+            "localidade": "São Paulo",
+            "uf": "SP"
+        }
+        # Dizemos ao mock_get para retornar nossa resposta simulada
+        mock_get.return_value = resposta_simulada
+
+        # 2. Fazer a requisição na NOSSA View
+        # Use o 'name' que definimos no urls.py
+        url = reverse('busca-cep', args=['01001000']) 
+        response = self.client.get(url)
+
+        # 3. Asserts
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['cidade'], 'São Paulo')
+
+    @patch('app.services.viacep.requests.get')
+    def test_consulta_cep_inexistente(self, mock_get):
+        """
+        Simula o cenário onde o CEP tem formato válido, mas não existe no ViaCep.
+        """
+        resposta_simulada = Mock()
+        resposta_simulada.status_code = 200
+        # O ViaCep retorna erro=True quando não acha
+        resposta_simulada.json.return_value = {"erro": True}
+        
+        mock_get.return_value = resposta_simulada
+
+        url = reverse('busca-cep', args=['99999999'])
+        response = self.client.get(url)
+
+        # Nossa view deve retornar 400 Bad Request nesse caso
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('erro', response.data)
+
+
+class GeoValidationTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse('geo-reversa')
+
+    def test_coordenadas_validas(self):
+        """Testa se o serializer aceita coordenadas reais."""
+        valid_payload = {
+            "latitude": -23.5505,
+            "longitude": -46.6333
+        }
+        resposta_fake = Mock()
+        resposta_fake.status_code = 200
+        resposta_fake.json.return_value = {
+            "place_id": 123456,
+            "lat": "-23.55052",
+            "lon": "-46.63330",
+            "display_name": "Praça da Sé, Sé, São Paulo, SP, Brasil",
+            "address": {
+                "road": "Praça da Sé",
+                "house_number": "S/N",
+                "suburb": "Sé",
+                "town": "São Paulo",
+                "state": "São Paulo",
+                "country": "Brasil",
+                "postcode": "01001-000"
+            }
+        }
+
+        response = self.client.get(self.url, valid_payload)
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_latitude_impossivel(self):
+        """Deve barrar latitudes fora de -90 a +90"""
+        payload = {
+            "latitude": 95.0, # Inválido
+            "longitude": -46.6333
+        }
+        response = self.client.get(self.url, payload, format='json')
+        
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('latitude', response.data) # O erro deve estar no campo latitude
+
+    def test_longitude_impossivel(self):
+        """Deve barrar longitudes fora de -180 a +180"""
+        payload = {
+            "latitude": -23.55,
+            "longitude": -200.0 # Inválido
+        }
+        response = self.client.get(self.url, payload, format='json')
+        self.assertEqual(response.status_code, 400)
+
+
+class GeoIntegrationTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse('geo-reversa')
+        self.valid_payload = {
+            "latitude": -23.55052,
+            "longitude": -46.63330
+        }
+
+    # Mockamos o requests.get lá dentro da lib do OpenStreetMap
+    @patch('app.services.openstreetmap.requests.get')
+    def test_geo_reversa_sucesso(self, mock_get):
+        """
+        Simula uma resposta de sucesso do OpenStreetMap.
+        """
+        # 1. Preparar o Mock (O que a API retornaria na vida real)
+        resposta_fake = Mock()
+        resposta_fake.status_code = 200
+        resposta_fake.json.return_value = {
+            "place_id": 123456,
+            "lat": "-23.55052",
+            "lon": "-46.63330",
+            "display_name": "Praça da Sé, Sé, São Paulo, SP, Brasil",
+            "address": {
+                "road": "Praça da Sé",
+                "house_number": "S/N",
+                "suburb": "Sé",
+                "town": "São Paulo",
+                "state": "São Paulo",
+                "country": "Brasil",
+                "postcode": "01001-000"
+            }
+        }
+        mock_get.return_value = resposta_fake
+
+        # 2. Ação
+        response = self.client.get(self.url, self.valid_payload)
+
+        # 3. Asserts
+        self.assertEqual(response.status_code, 200)
+        
+        # Verifica se nossa API formatou os dados corretamente (DTO)
+        self.assertEqual(response.data['rua'], "Praça da Sé")
+        self.assertEqual(response.data['cidade'], "São Paulo")
+        
+        # Verifica se o cache foi chamado (se você já tiver implementado o cache)
+        # mock_get.assert_called_once() 
+
+    @patch('app.services.openstreetmap.requests.get')
+    def test_geo_reversa_falha_api(self, mock_get):
+        """
+        Simula erro 500 ou indisponibilidade do OpenStreetMap.
+        """
+        # O mock lança uma exceção de timeout/conexão
+        import requests
+        mock_get.side_effect = requests.exceptions.RequestException("Timeout")
+
+        response = self.client.get(self.url, self.valid_payload)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.data)
+
+    @patch('app.services.openstreetmap.requests.get')
+    def test_geo_local_nao_encontrado(self, mock_get):
+        """
+        Simula coordenadas no meio do oceano (sem endereço).
+        """
+        resposta_fake = Mock()
+        resposta_fake.status_code = 200
+        # Nominatim às vezes retorna 'error' no JSON quando não acha
+        resposta_fake.json.return_value = {"error": "Unable to geocode"}
+        
+        mock_get.return_value = resposta_fake
+
+        response = self.client.get(self.url, self.valid_payload)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error'], "Não foi possível realizar a geolocalização reversa")
+
+    @patch('app.services.openstreetmap.requests.get')
+    def test_geo_dados_endereco_nao_encontrado(self, mock_get):
+        """
+        Simula um retorno positivo da geolocalização, porém sem dados de endereço disponíveis
+        """
+        resposta_fake = Mock()
+        resposta_fake.status_code = 200
+        # Nominatim às vezes retorna 'error' no JSON quando não acha
+        resposta_fake.json.return_value = {
+            "place_id": 123456,
+            "lat": "-23.55052",
+            "lon": "-46.63330",
+            "display_name": "São Paulo, SP, Brasil",
+            "address": {
+            }
+        }
+        
+        mock_get.return_value = resposta_fake
+
+        response = self.client.get(self.url, self.valid_payload)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error'], "Não foi possível encontrar informações de endereço para as coordenadas inseridas")

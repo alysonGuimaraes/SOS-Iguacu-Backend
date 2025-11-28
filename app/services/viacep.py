@@ -1,10 +1,11 @@
 import requests
+from django.core.cache import cache
 
 class ViaCepClient:
     def __init__(self):
         self.base_url = "https://viacep.com.br/ws"
-        # Timeout é CRUCIAL no requests, pois o padrão é infinito (pode travar seu app)
-        self.timeout = 5 
+        self.timeout = 5 # Timeout caso a chamada para a API externa demore demais
+        self.cache_ttl = 86400 # 1 dia
 
     def consultar_cep(self, cep):
         """
@@ -12,6 +13,16 @@ class ViaCepClient:
         """
         clean_cep = str(cep).replace("-", "").replace(".", "")
         url = f"{self.base_url}/{clean_cep}/json/"
+
+        # Define uma chave unica para cada CEP 
+        cache_key = f"viacep_{clean_cep}"
+        
+        # Tenta utilizar a chave para buscar do cache
+        dados_cache = cache.get(cache_key)
+
+        if dados_cache:
+            # print("Buscando viaCEP... Cache")
+            return {"success": True, "data": dados_cache}
 
         try:
             response = requests.get(url, timeout=self.timeout)
@@ -32,6 +43,9 @@ class ViaCepClient:
             # ViaCep retorna 200 mesmo se o CEP não existe, mas manda um json {'erro': true}
             if "erro" in data:
                 return {"success": False, "error": "CEP não encontrado na base"}
+            
+            # print("Buscando CEP... API viacep")
+            cache.set(cache_key, resposta, self.cache_ttl)
 
             return {"success": True, "data": resposta}
 
