@@ -29,7 +29,7 @@ class OpenStreetMapClient:
         dados_cache = cache.get(cache_key)
 
         if dados_cache:
-            print("Buscando endereço... Cache")
+            # print("Buscando endereço... Cache")
             return {"success": True, "data": dados_cache}
 
         try:
@@ -60,7 +60,7 @@ class OpenStreetMapClient:
                 "cep": data.get('address', {}).get('postcode', '')
             }
 
-            print("Buscando endereço... API openstreetmap")
+            # print("Buscando endereço... API openstreetmap")
             cache.set(cache_key, endereco_formatado, self.cache_ttl)
 
             return {"success": True, "data": endereco_formatado}
