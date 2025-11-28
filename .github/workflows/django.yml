@@ -17,7 +17,7 @@ jobs:
         env:
           POSTGRES_DB: db_teste_ci
           POSTGRES_USER: usuario_teste
-          POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
         ports:
           - 5432:5432
         options: >-
@@ -33,14 +33,6 @@ jobs:
       with:
         python-version: '3.14'
         
-    - name: Criar arquivo .env para Teste
-      run: |
-        echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-        echo "DB_USER=${{ secrets.DB_USER }}" >> .env
-        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-        echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-        echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
-        
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
@@ -49,12 +41,9 @@ jobs:
         
     - name: Run Tests
       env:
-        SECRET_KEY: ${{ secrets.CI_SECRET_KEY }}
-        DEBUG: 'False'
-        DB_ENGINE: 'django.db.backends.postgresql'
         DB_NAME: 'db_teste_ci'
         DB_USER: 'usuario_teste'
-        DB_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         DB_HOST: 'localhost'
         DB_PORT: '5432'
       run: |
