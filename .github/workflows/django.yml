@@ -18,6 +18,14 @@ jobs:
       with:
         python-version: '3.14'
         
+    - name: Criar arquivo .env para Teste
+      run: |
+        echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+        echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+        echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+        echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+        
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
