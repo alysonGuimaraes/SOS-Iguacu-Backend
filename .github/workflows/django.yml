@@ -11,6 +11,21 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:17.6
+        env:
+          POSTGRES_DB: db_teste_ci
+          POSTGRES_USER: usuario_teste
+          POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.14
@@ -30,7 +45,17 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install psycopg2-binary
         
     - name: Run Tests
+      env:
+        SECRET_KEY: ${{ secrets.CI_SECRET_KEY }}
+        DEBUG: 'False'
+        DB_ENGINE: 'django.db.backends.postgresql'
+        DB_NAME: 'db_teste_ci'
+        DB_USER: 'usuario_teste'
+        DB_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+        DB_HOST: 'localhost'
+        DB_PORT: '5432'
       run: |
         python manage.py test
