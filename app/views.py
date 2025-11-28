@@ -4,9 +4,10 @@ from rest_framework import status
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
+from app.services.openstreetmap import OpenStreetMapClient
 from app.services.viacep import ViaCepClient
 from .models import Voluntario, RegiaoAfetada, Doacao
-from .serializers import CepInputSerializer, VoluntarioSerializer, RegiaoAfetadaSerializer, DoacaoSerializer
+from .serializers import CepInputSerializer, GeoInputSerializer, VoluntarioSerializer, RegiaoAfetadaSerializer, DoacaoSerializer
 
 
 # =================================================
@@ -174,5 +175,27 @@ def busca_cep(request, cep):
 
     if not resultado['success']:
         return Response({'erro': resultado['error']}, status=400)
+
+    return Response(resultado['data'])
+
+
+@api_view(['GET']) # Melhor usar POST para enviar coordenadas JSON
+def geolocalizacao_reversa(request):
+    # 1. Validação
+    serializer = GeoInputSerializer(data=request.query_params)
+    
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # 2. Extrair dados limpos (float)
+    lat = serializer.validated_data['latitude']
+    lon = serializer.validated_data['longitude']
+
+    # 3. Integração
+    client = OpenStreetMapClient()
+    resultado = client.buscar_endereco(lat, lon)
+
+    if not resultado['success']:
+        return Response({'error': resultado['error']}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response(resultado['data'])
